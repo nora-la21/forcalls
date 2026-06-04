@@ -288,14 +288,13 @@ async function startCapture() {
     };
 
     deepgramSocket.onerror = (e) => {
+      console.error('Deepgram error:', e);
       statusText.textContent = 'Deepgram connection error';
     };
 
     deepgramSocket.onclose = (e) => {
-      if (isCapturing) {
-        // Don't auto-reconnect, just stop cleanly
-        stopCapture();
-      }
+      console.warn('Deepgram closed:', e.code, e.reason);
+      if (isCapturing) stopCapture();
     };
 
     processor.ondataavailable = (e) => {

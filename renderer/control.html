@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src wss://api.deepgram.com; style-src 'self' 'unsafe-inline';" />
   <title>ForCalls</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -261,8 +262,9 @@ async function startCapture() {
       audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000, channelCount: 1 },
     });
     audioContext = new AudioContext({ sampleRate: 16000 });
+    await audioContext.audioWorklet.addModule('pcm-processor.js');
     const source = audioContext.createMediaStreamSource(micStream);
-    processor = audioContext.createScriptProcessor(4096, 1, 1);
+    processor = new AudioWorkletNode(audioContext, 'pcm-processor');
     source.connect(processor);
     processor.connect(audioContext.destination);
 
@@ -286,11 +288,9 @@ async function startCapture() {
     deepgramSocket.onerror = () => { statusText.textContent = 'Deepgram connection error'; };
     deepgramSocket.onclose = () => { if (isCapturing) stopCapture(); };
 
-    processor.onaudioprocess = (e) => {
+    processor.port.onmessage = (e) => {
       if (!isCapturing || deepgramSocket?.readyState !== WebSocket.OPEN) return;
-      const float32 = e.inputBuffer.getChannelData(0);
-      const int16 = float32ToInt16(float32);
-      deepgramSocket.send(int16.buffer);
+      deepgramSocket.send(e.data);
     };
   } catch (err) {
     statusText.textContent = `Error: ${err.message}`;
@@ -336,14 +336,6 @@ function appendTip(tip) {
   tipPreview.scrollTop = tipPreview.scrollHeight;
 }
 
-function float32ToInt16(float32Array) {
-  const int16 = new Int16Array(float32Array.length);
-  for (let i = 0; i < float32Array.length; i++) {
-    const s = Math.max(-1, Math.min(1, float32Array[i]));
-    int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-  }
-  return int16;
-}
 
 function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

@@ -262,7 +262,8 @@ async function startCapture() {
       audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000, channelCount: 1 },
     });
     audioContext = new AudioContext({ sampleRate: 16000 });
-    await audioContext.audioWorklet.addModule('pcm-processor.js');
+    const processorUrl = new URL('pcm-processor.js', document.baseURI).href;
+    await audioContext.audioWorklet.addModule(processorUrl);
     const source = audioContext.createMediaStreamSource(micStream);
     processor = new AudioWorkletNode(audioContext, 'pcm-processor');
     source.connect(processor);

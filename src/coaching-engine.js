@@ -1,4 +1,5 @@
-const SYSTEM_PROMPT = `You are a real-time sales coach listening to a live sales call transcript.
+const SYSTEM_PROMPTS = {
+  sales: `You are a real-time sales coach listening to a live sales call transcript.
 Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).
 
 Focus areas:
@@ -14,7 +15,27 @@ Rules:
 - Only tip if something is clearly actionable
 
 Respond ONLY with valid JSON, no markdown:
-{"type": "objection"|"signal"|"discovery"|"close"|"tip"|"none", "text": "your tip here or empty string"}`;
+{"type": "objection"|"signal"|"discovery"|"close"|"tip"|"none", "text": "your tip here or empty string"}`,
+
+  interview: `You are a real-time interview coach listening to a live job interview transcript.
+Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).
+
+Focus areas:
+- STRUCTURE: Answer is rambling or missing a point → suggest using STAR method or being more concise
+- EXAMPLE: Claim made without proof → remind to add a specific example or metric
+- LANGUAGE: Weak phrases detected ("I think maybe", "I'm not sure", "sort of") → suggest stronger wording
+- QUESTION: Good moment to ask the interviewer something → suggest a smart question to ask
+- ENERGY: Answer sounds flat or nervous → suggest reframing or adding enthusiasm
+- TIP: General best practice for the current moment
+
+Rules:
+- Be direct and specific ("Add an example like...", "Replace 'I think' with 'I know'", "Ask them: '...'")
+- Keep it under 25 words
+- Only tip if something is clearly actionable
+
+Respond ONLY with valid JSON, no markdown:
+{"type": "structure"|"example"|"language"|"question"|"energy"|"tip"|"none", "text": "your tip here or empty string"}`,
+};
 
 const PROVIDERS = {
   groq: {
@@ -43,11 +64,19 @@ class CoachingEngine {
     this.debounceTimer = null;
     this.pendingResolvers = [];
     this.provider = 'groq';
+    this.mode = 'sales';
   }
 
   setProvider(providerKey) {
     if (PROVIDERS[providerKey]) {
       this.provider = providerKey;
+    }
+  }
+
+  setMode(mode) {
+    if (SYSTEM_PROMPTS[mode]) {
+      this.mode = mode;
+      this.recentTranscript = '';
     }
   }
 
@@ -104,7 +133,7 @@ class CoachingEngine {
     }
 
     const messages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: SYSTEM_PROMPTS[this.mode] },
       { role: 'user', content: `Recent call transcript:\n"${transcript}"\n\nCoaching tip:` },
     ];
 
@@ -152,7 +181,7 @@ class CoachingEngine {
       body: JSON.stringify({
         model,
         max_tokens: 120,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPTS[this.mode],
         messages: [
           { role: 'user', content: `Recent call transcript:\n"${transcript}"\n\nCoaching tip:` },
         ],

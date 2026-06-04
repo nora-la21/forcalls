@@ -117,3 +117,7 @@ ipcMain.handle('get-env', () => ({
 ipcMain.on('set-provider', (event, providerKey) => {
   coachingEngine.setProvider(providerKey);
 });
+
+ipcMain.on('set-mode', (event, mode) => {
+  coachingEngine.setMode(mode);
+});

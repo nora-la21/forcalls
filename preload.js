@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onClearTips: (cb) => ipcRenderer.on('clear-tips', () => cb()),
 
   setProvider: (key) => ipcRenderer.send('set-provider', key),
+  setMode: (mode) => ipcRenderer.send('set-mode', mode),
 
   // Queries
   getEnv: () => ipcRenderer.invoke('get-env'),

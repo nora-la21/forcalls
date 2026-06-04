@@ -119,6 +119,27 @@
     .badge-close     { background: rgba(167,139,250,0.15); color: #a78bfa; }
     .badge-tip       { background: rgba(251,191,36,0.15);  color: #fbbf24; }
 
+    .mode-row {
+      display: flex;
+      gap: 8px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 7px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #1f2937;
+      color: #9ca3af;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background: #374151;
+      color: #fff;
+      border-color: #6b7280;
+    }
+
     .provider-row {
       display: flex;
       align-items: center;
@@ -140,6 +161,11 @@
 <body>
   <h1>ForCalls ✦</h1>
   <p class="subtitle">Real-time AI sales coaching</p>
+
+  <div class="mode-row">
+    <button class="mode-btn active" id="modeSales" onclick="setMode('sales')">💼 Sales</button>
+    <button class="mode-btn" id="modeInterview" onclick="setMode('interview')">🎯 Interview</button>
+  </div>
 
   <div class="provider-row">
     <label for="providerSelect" style="font-size:12px;color:#666;">AI Provider:</label>
@@ -222,6 +248,14 @@ providerSelect.addEventListener('change', () => {
     startBtn.disabled = true;
   }
 });
+
+function setMode(mode) {
+  window.electronAPI.setMode(mode);
+  window.electronAPI.clearTips();
+  tipPreview.innerHTML = '<span style="color:#444">Tips will appear here...</span>';
+  document.getElementById('modeSales').classList.toggle('active', mode === 'sales');
+  document.getElementById('modeInterview').classList.toggle('active', mode === 'interview');
+}
 
 function updateProviderStatus() {
   const active = providers.find((p) => p.key === providerSelect.value);

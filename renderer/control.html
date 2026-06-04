@@ -261,19 +261,19 @@ async function startCapture() {
     micStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000, channelCount: 1 },
     });
+    // Use MediaRecorder with webm/opus
+    processor = new MediaRecorder(micStream, { mimeType: 'audio/webm;codecs=opus' });
+
     deepgramSocket = new WebSocket(
-      `wss://api.deepgram.com/v1/listen?encoding=opus&sample_rate=48000&language=en-US&interim_results=true&smart_format=true&endpointing=500`,
+      `wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&interim_results=true&smart_format=true&endpointing=300`,
       ['token', deepgramKey]
     );
 
-    await new Promise((resolve, reject) => {
-      deepgramSocket.onopen = resolve;
-      deepgramSocket.onerror = reject;
-      setTimeout(reject, 5000);
-    });
-
-    isCapturing = true;
-    updateStatus('active');
+    deepgramSocket.onopen = () => {
+      isCapturing = true;
+      updateStatus('active');
+      processor.start(250);
+    };
 
     deepgramSocket.onmessage = (event) => {
       try {
@@ -286,17 +286,23 @@ async function startCapture() {
         }
       } catch (_) {}
     };
-    deepgramSocket.onerror = () => { statusText.textContent = 'Deepgram connection error'; };
-    deepgramSocket.onclose = () => { if (isCapturing) stopCapture(); };
 
-    // Use MediaRecorder — no AudioWorklet needed, Deepgram accepts webm/opus directly
-    processor = new MediaRecorder(micStream, { mimeType: 'audio/webm;codecs=opus' });
+    deepgramSocket.onerror = (e) => {
+      statusText.textContent = 'Deepgram connection error';
+    };
+
+    deepgramSocket.onclose = (e) => {
+      if (isCapturing) {
+        // Don't auto-reconnect, just stop cleanly
+        stopCapture();
+      }
+    };
+
     processor.ondataavailable = (e) => {
       if (e.data.size > 0 && deepgramSocket?.readyState === WebSocket.OPEN) {
         deepgramSocket.send(e.data);
       }
     };
-    processor.start(250); // send chunks every 250ms
   } catch (err) {
     statusText.textContent = `Error: ${err.message}`;
     updateStatus('error');

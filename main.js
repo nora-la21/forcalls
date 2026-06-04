@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, desktopCapturer } = require('electron');
 const path = require('path');
 const CoachingEngine = require('./src/coaching-engine');
 
@@ -38,7 +38,7 @@ function createOverlayWindow() {
 function createControlWindow() {
   controlWindow = new BrowserWindow({
     width: 420,
-    height: 380,
+    height: 420,
     resizable: false,
     title: 'ForCalls — Sales Coach',
     webPreferences: {
@@ -49,7 +49,6 @@ function createControlWindow() {
   });
 
   controlWindow.loadFile(path.join(__dirname, 'renderer', 'control.html'));
-  controlWindow.webContents.openDevTools({ mode: 'detach' });
   controlWindow.on('closed', () => {
     app.quit();
   });
@@ -59,11 +58,16 @@ app.whenReady().then(() => {
   createOverlayWindow();
   createControlWindow();
 
-  // Grant microphone permission without prompting
+  // Grant mic + screen capture permissions without prompting
   const { session } = require('electron');
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    if (permission === 'media') return callback(true);
+    if (permission === 'media' || permission === 'display-capture') return callback(true);
     callback(false);
+  });
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
+      callback({ video: sources[0], audio: 'loopback' });
+    });
   });
 
   // Toggle overlay visibility: Ctrl+Shift+H
@@ -115,6 +119,11 @@ ipcMain.handle('get-overlay-position', () => {
 
 ipcMain.on('move-overlay', (event, x, y) => {
   if (overlayWindow) overlayWindow.setPosition(Math.round(x), Math.round(y));
+});
+
+ipcMain.handle('get-desktop-sources', async () => {
+  const sources = await desktopCapturer.getSources({ types: ['screen'] });
+  return sources.map((s) => ({ id: s.id, name: s.name }));
 });
 
 ipcMain.handle('get-env', () => ({

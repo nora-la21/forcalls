@@ -183,6 +183,14 @@
   </div>
 
   <div class="provider-row">
+    <label style="font-size:12px;color:#666;">Audio Source:</label>
+    <select id="sourceSelect">
+      <option value="microphone">🎙 Microphone</option>
+      <option value="system">🔊 System Audio (captures call)</option>
+    </select>
+  </div>
+
+  <div class="provider-row">
     <label for="providerSelect" style="font-size:12px;color:#666;">AI Provider:</label>
     <select id="providerSelect">
       <option value="groq">Groq (Free)</option>
@@ -320,9 +328,24 @@ clearBtn.addEventListener('click', () => {
 async function startCapture() {
   try {
     updateStatus('connecting');
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000, channelCount: 1 },
-    });
+    const sourceMode = document.getElementById('sourceSelect').value;
+
+    if (sourceMode === 'system') {
+      // Capture system audio via getDisplayMedia (needs Screen Recording permission)
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: true,
+      });
+      // Extract audio track only, discard video
+      const audioTrack = displayStream.getAudioTracks()[0];
+      if (!audioTrack) throw new Error('No system audio track — make sure to check "Share audio" when prompted');
+      displayStream.getVideoTracks().forEach(t => t.stop());
+      micStream = new MediaStream([audioTrack]);
+    } else {
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000, channelCount: 1 },
+      });
+    }
     // Use MediaRecorder with webm/opus
     processor = new MediaRecorder(micStream, { mimeType: 'audio/webm;codecs=opus' });
 

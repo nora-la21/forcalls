@@ -23,4 +23,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Queries
   getEnv: () => ipcRenderer.invoke('get-env'),
+  getDesktopSources: () => ipcRenderer.invoke('get-desktop-sources'),
 });

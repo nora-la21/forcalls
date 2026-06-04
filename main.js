@@ -49,7 +49,8 @@ function createControlWindow() {
   });
 
   controlWindow.loadFile(path.join(__dirname, 'renderer', 'control.html'));
-controlWindow.on('closed', () => {
+  controlWindow.webContents.openDevTools({ mode: 'detach' });
+  controlWindow.on('closed', () => {
     app.quit();
   });
 }
@@ -57,6 +58,13 @@ controlWindow.on('closed', () => {
 app.whenReady().then(() => {
   createOverlayWindow();
   createControlWindow();
+
+  // Grant microphone permission without prompting
+  const { session } = require('electron');
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') return callback(true);
+    callback(false);
+  });
 
   // Toggle overlay visibility: Ctrl+Shift+H
   globalShortcut.register('CommandOrControl+Shift+H', () => {

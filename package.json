@@ -1,0 +1,20 @@
+{
+  "name": "forcalls",
+  "version": "1.0.0",
+  "description": "Real-time AI sales coaching overlay for Google Meet & Zoom",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3"
+  },
+  "keywords": ["sales", "coaching", "ai", "overlay", "electron"],
+  "author": "",
+  "license": "MIT"
+}

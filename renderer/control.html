@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForCalls</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f12;
+      color: #e8e8e8;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 14px;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-top: -10px;
+    }
+
+    .setup-warning {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #f87171;
+      line-height: 1.5;
+      display: none;
+    }
+    .setup-warning a {
+      color: #f87171;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #444;
+      flex-shrink: 0;
+    }
+    .dot.active { background: #22c55e; animation: pulse 1.5s ease-in-out infinite; }
+    .dot.paused { background: #f59e0b; }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; } 50% { opacity:0.4; }
+    }
+
+    .status-text { font-size: 13px; color: #aaa; }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #startBtn { background: #22c55e; color: #000; }
+    #stopBtn  { background: #374151; color: #e8e8e8; }
+    #clearBtn { background: #1f2937; color: #9ca3af; flex: 0 0 auto; width: 80px; }
+
+    .tip-preview {
+      flex: 1;
+      background: #161619;
+      border-radius: 8px;
+      padding: 10px 12px;
+      overflow-y: auto;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .tip-entry {
+      padding: 6px 0;
+      border-bottom: 1px solid #1f2937;
+      color: #ccc;
+      line-height: 1.4;
+    }
+    .tip-entry:last-child { border-bottom: none; }
+    .tip-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-right: 5px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #374151;
+      color: #9ca3af;
+    }
+    .badge-objection { background: rgba(248,113,113,0.15); color: #f87171; }
+    .badge-signal    { background: rgba(52,211,153,0.15);  color: #34d399; }
+    .badge-discovery { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+    .badge-close     { background: rgba(167,139,250,0.15); color: #a78bfa; }
+    .badge-tip       { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+
+    .shortcut { font-size: 11px; color: #444; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>ForCalls ✦</h1>
+  <p class="subtitle">Real-time AI sales coaching</p>
+
+  <div class="setup-warning" id="setupWarning">
+    ⚠️ Missing API keys. Create a <code>.env</code> file with:<br>
+    <code>ANTHROPIC_API_KEY=...</code><br>
+    <code>DEEPGRAM_API_KEY=...</code><br>
+    See <code>.env.example</code> for the template.
+  </div>
+
+  <div class="status-row">
+    <div class="dot" id="dot"></div>
+    <span class="status-text" id="statusText">Ready to start</span>
+  </div>
+
+  <div class="buttons">
+    <button id="startBtn">▶ Start Listening</button>
+    <button id="stopBtn" disabled>■ Stop</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <div class="tip-preview" id="tipPreview">
+    <span style="color:#444">Tips will appear here...</span>
+  </div>
+
+  <div class="shortcut">Ctrl+Shift+H — toggle overlay visibility</div>
+
+  <script src="control.js"></script>
+</body>
+</html>

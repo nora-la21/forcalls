@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForCalls Overlay</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-app-region: no-drag;
+    }
+
+    #container {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      width: 380px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 20px;
+      width: fit-content;
+      align-self: flex-end;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #666;
+    }
+    .status-dot.active {
+      background: #22c55e;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .status-dot.paused { background: #f59e0b; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-label {
+      font-size: 11px;
+      color: #aaa;
+      letter-spacing: 0.3px;
+    }
+
+    .tip-card {
+      background: rgba(10, 10, 15, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      animation: slideIn 0.3s ease-out;
+      backdrop-filter: blur(10px);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .tip-icon {
+      font-size: 16px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .tip-body {
+      flex: 1;
+    }
+
+    .tip-type {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .tip-text {
+      font-size: 13px;
+      line-height: 1.45;
+      color: #e8e8e8;
+    }
+
+    .tip-time {
+      font-size: 9px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    /* Type colours */
+    .type-objection .tip-type { color: #f87171; }
+    .type-objection { border-left: 3px solid #f87171; }
+
+    .type-signal .tip-type { color: #34d399; }
+    .type-signal { border-left: 3px solid #34d399; }
+
+    .type-discovery .tip-type { color: #60a5fa; }
+    .type-discovery { border-left: 3px solid #60a5fa; }
+
+    .type-close .tip-type { color: #a78bfa; }
+    .type-close { border-left: 3px solid #a78bfa; }
+
+    .type-tip .tip-type { color: #fbbf24; }
+    .type-tip { border-left: 3px solid #fbbf24; }
+
+    .type-error .tip-type { color: #f87171; }
+    .type-error { border-left: 3px solid #f87171; }
+
+    .fade-out {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateY(-8px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-label" id="statusLabel">Waiting...</span>
+    </div>
+    <div id="tips"></div>
+  </div>
+
+  <script>
+    const MAX_TIPS = 4;
+    const TIP_LIFETIME_MS = 30000;
+
+    const icons = {
+      objection: '🛡️',
+      signal: '🎯',
+      discovery: '🔍',
+      close: '🤝',
+      tip: '💡',
+      error: '⚠️',
+    };
+
+    const statusDot = document.getElementById('statusDot');
+    const statusLabel = document.getElementById('statusLabel');
+    const tipsContainer = document.getElementById('tips');
+
+    window.electronAPI.onCaptureStatus((status) => {
+      if (status === 'active') {
+        statusDot.className = 'status-dot active';
+        statusLabel.textContent = 'Listening...';
+      } else if (status === 'paused') {
+        statusDot.className = 'status-dot paused';
+        statusLabel.textContent = 'Paused';
+      } else {
+        statusDot.className = 'status-dot';
+        statusLabel.textContent = 'Off';
+      }
+    });
+
+    window.electronAPI.onCoachingTip((tip) => {
+      if (!tip || tip.type === 'none' || !tip.text) return;
+      addTip(tip);
+    });
+
+    window.electronAPI.onClearTips(() => {
+      tipsContainer.innerHTML = '';
+    });
+
+    function addTip(tip) {
+      const cards = tipsContainer.querySelectorAll('.tip-card');
+      if (cards.length >= MAX_TIPS) {
+        cards[0].classList.add('fade-out');
+        setTimeout(() => cards[0].remove(), 500);
+      }
+
+      const card = document.createElement('div');
+      card.className = `tip-card type-${tip.type}`;
+      const time = new Date(tip.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      card.innerHTML = `
+        <div class="tip-icon">${icons[tip.type] || '💡'}</div>
+        <div class="tip-body">
+          <div class="tip-type">${tip.type}</div>
+          <div class="tip-text">${escapeHtml(tip.text)}</div>
+          <div class="tip-time">${time}</div>
+        </div>
+      `;
+      tipsContainer.appendChild(card);
+
+      // Auto-remove after lifetime
+      setTimeout(() => {
+        if (card.parentNode) {
+          card.classList.add('fade-out');
+          setTimeout(() => card.remove(), 500);
+        }
+      }, TIP_LIFETIME_MS);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>

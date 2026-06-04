@@ -29,7 +29,7 @@ function createOverlayWindow() {
   });
 
   overlayWindow.loadFile(path.join(__dirname, 'renderer', 'overlay.html'));
-  overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+  overlayWindow.setIgnoreMouseEvents(false);
 
   // Make invisible to screen sharing (Mac: setContentProtection, Windows: handled via CSS trick)
   overlayWindow.setContentProtection(true);
@@ -106,6 +106,15 @@ ipcMain.on('capture-status', (event, status) => {
 
 ipcMain.on('clear-tips', () => {
   if (overlayWindow) overlayWindow.webContents.send('clear-tips');
+});
+
+ipcMain.handle('get-overlay-position', () => {
+  const [x, y] = overlayWindow.getPosition();
+  return [x, y];
+});
+
+ipcMain.on('move-overlay', (event, x, y) => {
+  if (overlayWindow) overlayWindow.setPosition(Math.round(x), Math.round(y));
 });
 
 ipcMain.handle('get-env', () => ({

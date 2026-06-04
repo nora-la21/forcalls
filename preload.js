@@ -17,6 +17,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setMode: (mode) => ipcRenderer.send('set-mode', mode),
   setContext: (text) => ipcRenderer.send('set-context', text),
 
+  // Overlay drag
+  getOverlayPosition: () => ipcRenderer.invoke('get-overlay-position'),
+  moveOverlay: (x, y) => ipcRenderer.send('move-overlay', x, y),
+
   // Queries
   getEnv: () => ipcRenderer.invoke('get-env'),
 });

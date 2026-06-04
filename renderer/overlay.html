@@ -12,20 +12,34 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       overflow: hidden;
       user-select: none;
-      -webkit-app-region: no-drag;
     }
 
     #container {
       position: fixed;
-      bottom: 0;
-      right: 0;
+      bottom: 20px;
+      right: 20px;
       width: 380px;
       padding: 12px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      pointer-events: none;
+      cursor: grab;
     }
+
+    #container:active { cursor: grabbing; }
+
+    #drag-handle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      margin-bottom: 2px;
+      cursor: grab;
+    }
+    #drag-handle:active { cursor: grabbing; }
+    #drag-hint { font-size: 10px; color: #333; }
 
     .status-bar {
       display: flex;
@@ -129,9 +143,12 @@
 </head>
 <body>
   <div id="container">
-    <div class="status-bar">
-      <div class="status-dot" id="statusDot"></div>
-      <span class="status-label" id="statusLabel">Waiting...</span>
+    <div id="drag-handle">
+      <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-label" id="statusLabel">Waiting...</span>
+      </div>
+      <span id="drag-hint">⠿ drag</span>
     </div>
     <div id="tips"></div>
   </div>
@@ -174,6 +191,30 @@
     window.electronAPI.onClearTips(() => {
       tipsContainer.innerHTML = '';
     });
+
+    // Drag to reposition overlay window
+    const handle = document.getElementById('drag-handle');
+    let dragging = false, startX, startY, winStartX, winStartY;
+
+    handle.addEventListener('mousedown', (e) => {
+      dragging = true;
+      startX = e.screenX;
+      startY = e.screenY;
+      window.electronAPI.getOverlayPosition().then(([x, y]) => {
+        winStartX = x;
+        winStartY = y;
+      });
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging || winStartX === undefined) return;
+      const dx = e.screenX - startX;
+      const dy = e.screenY - startY;
+      window.electronAPI.moveOverlay(winStartX + dx, winStartY + dy);
+    });
+
+    window.addEventListener('mouseup', () => { dragging = false; winStartX = undefined; });
 
     function addTip(tip) {
       const cards = tipsContainer.querySelectorAll('.tip-card');

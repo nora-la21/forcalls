@@ -38,7 +38,7 @@ function createOverlayWindow() {
 function createControlWindow() {
   controlWindow = new BrowserWindow({
     width: 420,
-    height: 290,
+    height: 380,
     resizable: false,
     title: 'ForCalls — Sales Coach',
     webPreferences: {
@@ -120,4 +120,8 @@ ipcMain.on('set-provider', (event, providerKey) => {
 
 ipcMain.on('set-mode', (event, mode) => {
   coachingEngine.setMode(mode);
+});
+
+ipcMain.on('set-context', (event, text) => {
+  coachingEngine.setContext(text);
 });

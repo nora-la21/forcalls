@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   setProvider: (key) => ipcRenderer.send('set-provider', key),
   setMode: (mode) => ipcRenderer.send('set-mode', mode),
+  setContext: (text) => ipcRenderer.send('set-context', text),
 
   // Queries
   getEnv: () => ipcRenderer.invoke('get-env'),

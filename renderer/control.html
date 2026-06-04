@@ -119,6 +119,21 @@
     .badge-close     { background: rgba(167,139,250,0.15); color: #a78bfa; }
     .badge-tip       { background: rgba(251,191,36,0.15);  color: #fbbf24; }
 
+    .context-box textarea {
+      width: 100%;
+      background: #161619;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #e8e8e8;
+      font-size: 12px;
+      padding: 8px 10px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+    .context-box textarea::placeholder { color: #444; }
+    .context-box textarea:focus { outline: none; border-color: #6b7280; }
+
     .mode-row {
       display: flex;
       gap: 8px;
@@ -175,6 +190,10 @@
       <option value="openai">OpenAI</option>
     </select>
     <span id="providerStatus" style="font-size:11px;color:#22c55e;">✓ key set</span>
+  </div>
+
+  <div class="context-box">
+    <textarea id="contextInput" placeholder="💼 Paste prospect info, product details, or deal context here (optional)..." rows="3"></textarea>
   </div>
 
   <div class="setup-warning" id="setupWarning">
@@ -249,12 +268,25 @@ providerSelect.addEventListener('change', () => {
   }
 });
 
+const contextInput = document.getElementById('contextInput');
+const placeholders = {
+  sales: '💼 Paste prospect info, product details, or deal context here (optional)...',
+  interview: '🎯 Paste the job description or role details here (optional)...',
+};
+
+contextInput.addEventListener('input', () => {
+  window.electronAPI.setContext(contextInput.value);
+});
+
 function setMode(mode) {
   window.electronAPI.setMode(mode);
   window.electronAPI.clearTips();
   tipPreview.innerHTML = '<span style="color:#444">Tips will appear here...</span>';
   document.getElementById('modeSales').classList.toggle('active', mode === 'sales');
   document.getElementById('modeInterview').classList.toggle('active', mode === 'interview');
+  contextInput.placeholder = placeholders[mode];
+  contextInput.value = '';
+  window.electronAPI.setContext('');
 }
 
 function updateProviderStatus() {

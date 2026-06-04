@@ -1,6 +1,9 @@
-const SYSTEM_PROMPTS = {
-  sales: `You are a real-time sales coach listening to a live sales call transcript.
-Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).
+function buildSalesPrompt(context) {
+  const contextBlock = context
+    ? `\n\nContext about this deal:\n${context}\nUse this to make tips more specific.`
+    : '';
+  return `You are a real-time sales coach listening to a live sales call transcript.
+Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).${contextBlock}
 
 Focus areas:
 - OBJECTION: Prospect raises concerns or hesitations → suggest specific response language to overcome it
@@ -15,10 +18,15 @@ Rules:
 - Only tip if something is clearly actionable
 
 Respond ONLY with valid JSON, no markdown:
-{"type": "objection"|"signal"|"discovery"|"close"|"tip"|"none", "text": "your tip here or empty string"}`,
+{"type": "objection"|"signal"|"discovery"|"close"|"tip"|"none", "text": "your tip here or empty string"}`;
+}
 
-  interview: `You are a real-time interview coach listening to a live job interview transcript.
-Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).
+function buildInterviewPrompt(context) {
+  const contextBlock = context
+    ? `\n\nJob description / role context:\n${context}\nTailor all tips to this specific role. Remind the candidate to highlight relevant skills from the job description when appropriate.`
+    : '';
+  return `You are a real-time interview coach listening to a live job interview transcript.
+Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).${contextBlock}
 
 Focus areas:
 - STRUCTURE: Answer is rambling or missing a point → suggest using STAR method or being more concise
@@ -34,8 +42,8 @@ Rules:
 - Only tip if something is clearly actionable
 
 Respond ONLY with valid JSON, no markdown:
-{"type": "structure"|"example"|"language"|"question"|"energy"|"tip"|"none", "text": "your tip here or empty string"}`,
-};
+{"type": "structure"|"example"|"language"|"question"|"energy"|"tip"|"none", "text": "your tip here or empty string"}`;
+}
 
 const PROVIDERS = {
   groq: {
@@ -65,6 +73,7 @@ class CoachingEngine {
     this.pendingResolvers = [];
     this.provider = 'groq';
     this.mode = 'sales';
+    this.context = '';
   }
 
   setProvider(providerKey) {
@@ -74,10 +83,19 @@ class CoachingEngine {
   }
 
   setMode(mode) {
-    if (SYSTEM_PROMPTS[mode]) {
+    if (['sales', 'interview'].includes(mode)) {
       this.mode = mode;
       this.recentTranscript = '';
     }
+  }
+
+  setContext(text) {
+    this.context = text.trim();
+  }
+
+  _getSystemPrompt() {
+    if (this.mode === 'interview') return buildInterviewPrompt(this.context);
+    return buildSalesPrompt(this.context);
   }
 
   getProviders() {
@@ -133,7 +151,7 @@ class CoachingEngine {
     }
 
     const messages = [
-      { role: 'system', content: SYSTEM_PROMPTS[this.mode] },
+      { role: 'system', content: this._getSystemPrompt() },
       { role: 'user', content: `Recent call transcript:\n"${transcript}"\n\nCoaching tip:` },
     ];
 
@@ -181,7 +199,7 @@ class CoachingEngine {
       body: JSON.stringify({
         model,
         max_tokens: 120,
-        system: SYSTEM_PROMPTS[this.mode],
+        system: this._getSystemPrompt(),
         messages: [
           { role: 'user', content: `Recent call transcript:\n"${transcript}"\n\nCoaching tip:` },
         ],

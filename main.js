@@ -49,6 +49,7 @@ function createControlWindow() {
   });
 
   controlWindow.loadFile(path.join(__dirname, 'renderer', 'control.html'));
+  controlWindow.webContents.openDevTools();
   controlWindow.on('closed', () => {
     app.quit();
   });

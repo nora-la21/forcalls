@@ -122,12 +122,37 @@
     .badge-close     { background: rgba(167,139,250,0.15); color: #a78bfa; }
     .badge-tip       { background: rgba(251,191,36,0.15);  color: #fbbf24; }
 
+    .provider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    select {
+      background: #1f2937;
+      color: #e8e8e8;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      flex: 1;
+    }
     .shortcut { font-size: 11px; color: #444; text-align: center; }
   </style>
 </head>
 <body>
   <h1>ForCalls ✦</h1>
   <p class="subtitle">Real-time AI sales coaching</p>
+
+  <div class="provider-row">
+    <label for="providerSelect" style="font-size:12px;color:#666;">AI Provider:</label>
+    <select id="providerSelect">
+      <option value="groq">Groq (Free)</option>
+      <option value="anthropic">Anthropic Claude</option>
+      <option value="openai">OpenAI</option>
+    </select>
+    <span id="providerStatus" style="font-size:11px;color:#22c55e;">✓ key set</span>
+  </div>
 
   <div class="setup-warning" id="setupWarning">
     ⚠️ Missing API keys. Create a <code>.env</code> file with:<br>

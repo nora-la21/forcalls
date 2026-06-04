@@ -15,15 +15,51 @@ const dot = document.getElementById('dot');
 const statusText = document.getElementById('statusText');
 const tipPreview = document.getElementById('tipPreview');
 const setupWarning = document.getElementById('setupWarning');
+const providerSelect = document.getElementById('providerSelect');
+const providerStatus = document.getElementById('providerStatus');
+
+let providers = [];
 
 // Check env vars on load
 window.electronAPI.getEnv().then((env) => {
   deepgramKey = env.deepgramKey;
-  if (!env.hasAnthropicKey || !env.hasDeepgramKey) {
+  providers = env.providers || [];
+
+  // Populate provider selector with key status
+  updateProviderStatus();
+
+  const hasDeepgram = env.hasDeepgramKey;
+  const activeProvider = providers.find((p) => p.key === providerSelect.value);
+  if (!hasDeepgram || !activeProvider?.hasKey) {
     setupWarning.style.display = 'block';
     startBtn.disabled = true;
   }
 });
+
+providerSelect.addEventListener('change', () => {
+  window.electronAPI.setProvider(providerSelect.value);
+  updateProviderStatus();
+
+  const activeProvider = providers.find((p) => p.key === providerSelect.value);
+  if (activeProvider?.hasKey) {
+    setupWarning.style.display = 'none';
+    startBtn.disabled = false;
+  } else {
+    setupWarning.style.display = 'block';
+    startBtn.disabled = true;
+  }
+});
+
+function updateProviderStatus() {
+  const active = providers.find((p) => p.key === providerSelect.value);
+  if (active?.hasKey) {
+    providerStatus.textContent = '✓ key set';
+    providerStatus.style.color = '#22c55e';
+  } else {
+    providerStatus.textContent = '✗ no key';
+    providerStatus.style.color = '#f87171';
+  }
+}
 
 // Listen for tips from main process
 window.electronAPI.onCoachingTip((tip) => {

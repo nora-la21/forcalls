@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onCaptureStatus: (cb) => ipcRenderer.on('capture-status', (_, status) => cb(status)),
   onClearTips: (cb) => ipcRenderer.on('clear-tips', () => cb()),
 
+  setProvider: (key) => ipcRenderer.send('set-provider', key),
+
   // Queries
   getEnv: () => ipcRenderer.invoke('get-env'),
 });

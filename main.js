@@ -38,7 +38,7 @@ function createOverlayWindow() {
 function createControlWindow() {
   controlWindow = new BrowserWindow({
     width: 420,
-    height: 240,
+    height: 290,
     resizable: false,
     title: 'ForCalls — Sales Coach',
     webPreferences: {
@@ -101,8 +101,11 @@ ipcMain.on('clear-tips', () => {
 });
 
 ipcMain.handle('get-env', () => ({
-  hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
   hasDeepgramKey: !!process.env.DEEPGRAM_API_KEY,
-  anthropicKey: process.env.ANTHROPIC_API_KEY || '',
   deepgramKey: process.env.DEEPGRAM_API_KEY || '',
+  providers: coachingEngine.getProviders(),
 }));
+
+ipcMain.on('set-provider', (event, providerKey) => {
+  coachingEngine.setProvider(providerKey);
+});

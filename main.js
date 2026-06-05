@@ -105,7 +105,7 @@ ipcMain.on('transcript-update', (event, fullTranscript) => {
 
 ipcMain.on('capture-status', (event, status) => {
   if (overlayWindow) overlayWindow.webContents.send('capture-status', status);
-  if (controlWindow) controlWindow.webContents.send('capture-status', status);
+  // Don't echo back to controlWindow — it already updated its own UI
 });
 
 ipcMain.on('clear-tips', () => {

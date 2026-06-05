@@ -16,6 +16,8 @@
       padding: 16px;
       gap: 10px;
     }
+    .drag-area { -webkit-app-region: drag; padding-bottom: 4px; }
+    .drag-area * { -webkit-app-region: no-drag; }
     h1 { font-size: 18px; font-weight: 700; color: #fff; }
     .subtitle { font-size: 12px; color: #555; margin-top: -6px; }
 
@@ -99,8 +101,10 @@
   </style>
 </head>
 <body>
-  <h1>ForCalls ✦</h1>
-  <p class="subtitle">Real-time AI coaching</p>
+  <div class="drag-area">
+    <h1>ForCalls ✦</h1>
+    <p class="subtitle">Real-time AI coaching — drag here to move</p>
+  </div>
 
   <div class="mode-row">
     <button class="mode-btn active" id="modeSales" onclick="setMode('sales')">💼 Sales</button>

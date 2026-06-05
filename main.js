@@ -38,9 +38,10 @@ function createOverlayWindow() {
 function createControlWindow() {
   controlWindow = new BrowserWindow({
     width: 420,
-    height: 420,
+    height: 440,
     resizable: false,
     title: 'ForCalls — Sales Coach',
+    titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

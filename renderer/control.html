@@ -330,32 +330,13 @@ async function startCapture() {
     const sourceMode = document.getElementById('sourceSelect').value;
 
     if (sourceMode === 'system') {
-      // Use desktopCapturer source ID for system audio capture in Electron
       const sources = await window.electronAPI.getDesktopSources();
       if (!sources || sources.length === 0) throw new Error('No screen sources found');
-      const source = sources[0];
-      const displayStream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          mandatory: {
-            chromeMediaSource: 'desktop',
-            chromeMediaSourceId: source.id,
-          }
-        }
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { chromeMediaSource: 'desktop', chromeMediaSourceId: sources[0].id },
+        video: { chromeMediaSource: 'desktop', chromeMediaSourceId: sources[0].id },
       });
-      // Stop video — we only want audio via loopback
-      displayStream.getVideoTracks().forEach(t => t.stop());
-
-      // Capture system audio separately via loopback
-      const audioStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          mandatory: {
-            chromeMediaSource: 'desktop',
-          }
-        },
-        video: false,
-      });
-      micStream = audioStream;
+      micStream.getVideoTracks().forEach(t => t.stop());
     } else {
       micStream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000, channelCount: 1 },

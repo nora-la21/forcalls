@@ -181,12 +181,15 @@ Now generate a comprehensive post-session report. Respond with valid JSON only:
     const resolvers = [...this.pendingResolvers];
     this.pendingResolvers = [];
     const transcript = this.recentTranscript.trim();
+    console.log('[CoachingEngine] Analyzing transcript:', transcript.slice(-100));
 
     try {
       const tip = await this._callProvider(transcript);
+      console.log('[CoachingEngine] Got tip:', tip);
       tip.timestamp = Date.now();
       resolvers.forEach((r) => r(tip));
     } catch (err) {
+      console.error('[CoachingEngine] Error:', err.message);
       const errorTip = {
         type: 'error',
         text: err.message.includes('key') || err.message.includes('401')

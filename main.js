@@ -31,6 +31,11 @@ function createOverlayWindow() {
   overlayWindow.loadFile(path.join(__dirname, 'renderer', 'overlay.html'));
   overlayWindow.setIgnoreMouseEvents(true, { forward: true });
 
+  // When renderer signals mouse is over draggable area, enable mouse events
+  ipcMain.on('overlay-set-interactive', (event, interactive) => {
+    if (overlayWindow) overlayWindow.setIgnoreMouseEvents(!interactive, { forward: true });
+  });
+
   // Make invisible to screen sharing (Mac: setContentProtection, Windows: handled via CSS trick)
   overlayWindow.setContentProtection(true);
 }

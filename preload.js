@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Overlay drag
   getOverlayPosition: () => ipcRenderer.invoke('get-overlay-position'),
   moveOverlay: (x, y) => ipcRenderer.send('move-overlay', x, y),
+  setOverlayInteractive: (v) => ipcRenderer.send('overlay-set-interactive', v),
 
   // Queries
   getEnv: () => ipcRenderer.invoke('get-env'),

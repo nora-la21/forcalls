@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src wss://api.deepgram.com wss://*; style-src 'self' 'unsafe-inline'; media-src *;" />
   <title>ForCalls</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #0f0f12;
@@ -15,425 +13,333 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 20px;
-      gap: 14px;
-    }
-
-    h1 {
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: -0.3px;
-    }
-
-    .subtitle {
-      font-size: 12px;
-      color: #666;
-      margin-top: -10px;
-    }
-
-    .setup-warning {
-      background: rgba(248, 113, 113, 0.1);
-      border: 1px solid rgba(248, 113, 113, 0.3);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 12px;
-      color: #f87171;
-      line-height: 1.5;
-      display: none;
-    }
-    .setup-warning a {
-      color: #f87171;
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #444;
-      flex-shrink: 0;
-    }
-    .dot.active { background: #22c55e; }
-    .dot.paused { background: #f59e0b; }
-
-    .status-text { font-size: 13px; color: #aaa; }
-
-    .buttons {
-      display: flex;
+      padding: 16px;
       gap: 10px;
     }
+    h1 { font-size: 18px; font-weight: 700; color: #fff; }
+    .subtitle { font-size: 12px; color: #555; margin-top: -6px; }
 
-    button {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
+    .mode-row { display: flex; gap: 8px; }
+    .mode-btn {
+      flex: 1; padding: 8px; border-radius: 8px;
+      border: 1px solid #374151; background: #1f2937;
+      color: #9ca3af; font-size: 13px; font-weight: 600; cursor: pointer;
     }
-    button:hover { opacity: 0.85; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .mode-btn.active { background: #374151; color: #fff; border-color: #6b7280; }
 
+    .row { display: flex; align-items: center; gap: 8px; }
+    label { font-size: 12px; color: #666; flex-shrink: 0; }
+    select {
+      flex: 1; background: #1f2937; color: #e8e8e8;
+      border: 1px solid #374151; border-radius: 6px;
+      padding: 5px 8px; font-size: 12px; cursor: pointer;
+    }
+    .key-status { font-size: 11px; }
+    .key-ok { color: #22c55e; }
+    .key-no { color: #f87171; }
+
+    textarea {
+      width: 100%; background: #161619; border: 1px solid #374151;
+      border-radius: 8px; color: #e8e8e8; font-size: 12px;
+      padding: 8px 10px; resize: vertical; font-family: inherit;
+      line-height: 1.4; min-height: 60px;
+    }
+    textarea::placeholder { color: #444; }
+    textarea:focus { outline: none; border-color: #6b7280; }
+
+    .warning {
+      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 8px; padding: 8px 12px; font-size: 12px;
+      color: #f87171; display: none;
+    }
+
+    .status-row { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; }
+    .dot.active { background: #22c55e; }
+    .dot.error { background: #f87171; }
+    .status-text { font-size: 13px; color: #aaa; }
+
+    .buttons { display: flex; gap: 8px; }
+    button {
+      flex: 1; padding: 10px; border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
     #startBtn { background: #22c55e; color: #000; }
     #stopBtn  { background: #374151; color: #e8e8e8; }
-    #clearBtn { background: #1f2937; color: #9ca3af; flex: 0 0 auto; width: 80px; }
+    #clearBtn { background: #1f2937; color: #9ca3af; flex: 0 0 70px; }
 
-    .tip-preview {
-      flex: 1;
-      background: #161619;
-      border-radius: 8px;
-      padding: 10px 12px;
-      overflow-y: auto;
-      font-size: 12px;
-      color: #666;
+    .tips {
+      flex: 1; background: #161619; border-radius: 8px;
+      padding: 10px 12px; overflow-y: auto; font-size: 12px; color: #666;
     }
-
     .tip-entry {
-      padding: 6px 0;
-      border-bottom: 1px solid #1f2937;
-      color: #ccc;
-      line-height: 1.4;
+      padding: 5px 0; border-bottom: 1px solid #1f2937;
+      color: #ccc; line-height: 1.4;
     }
     .tip-entry:last-child { border-bottom: none; }
-    .tip-badge {
-      display: inline-block;
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      margin-right: 5px;
-      padding: 1px 5px;
-      border-radius: 4px;
-      background: #374151;
-      color: #9ca3af;
+    .badge {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      margin-right: 5px; padding: 1px 5px; border-radius: 4px;
+      background: #374151; color: #9ca3af;
     }
     .badge-objection { background: rgba(248,113,113,0.15); color: #f87171; }
     .badge-signal    { background: rgba(52,211,153,0.15);  color: #34d399; }
     .badge-discovery { background: rgba(96,165,250,0.15);  color: #60a5fa; }
     .badge-close     { background: rgba(167,139,250,0.15); color: #a78bfa; }
     .badge-tip       { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+    .badge-structure { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+    .badge-example   { background: rgba(52,211,153,0.15);  color: #34d399; }
+    .badge-language  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+    .badge-question  { background: rgba(167,139,250,0.15); color: #a78bfa; }
+    .badge-energy    { background: rgba(248,113,113,0.15); color: #f87171; }
 
-    .context-box textarea {
-      width: 100%;
-      background: #161619;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      color: #e8e8e8;
-      font-size: 12px;
-      padding: 8px 10px;
-      resize: vertical;
-      font-family: inherit;
-      line-height: 1.4;
-    }
-    .context-box textarea::placeholder { color: #444; }
-    .context-box textarea:focus { outline: none; border-color: #6b7280; }
-
-    .mode-row {
-      display: flex;
-      gap: 8px;
-    }
-    .mode-btn {
-      flex: 1;
-      padding: 7px;
-      border-radius: 8px;
-      border: 1px solid #374151;
-      background: #1f2937;
-      color: #9ca3af;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .mode-btn.active {
-      background: #374151;
-      color: #fff;
-      border-color: #6b7280;
-    }
-
-    .provider-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    select {
-      background: #1f2937;
-      color: #e8e8e8;
-      border: 1px solid #374151;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 12px;
-      cursor: pointer;
-      flex: 1;
-    }
-    .shortcut { font-size: 11px; color: #444; text-align: center; }
+    .shortcut { font-size: 11px; color: #333; text-align: center; }
   </style>
 </head>
 <body>
   <h1>ForCalls ✦</h1>
-  <p class="subtitle">Real-time AI sales coaching</p>
+  <p class="subtitle">Real-time AI coaching</p>
 
   <div class="mode-row">
     <button class="mode-btn active" id="modeSales" onclick="setMode('sales')">💼 Sales</button>
     <button class="mode-btn" id="modeInterview" onclick="setMode('interview')">🎯 Interview</button>
   </div>
 
-  <div class="provider-row">
-    <label style="font-size:12px;color:#666;">Audio Source:</label>
+  <div class="row">
+    <label>Audio:</label>
     <select id="sourceSelect">
       <option value="microphone">🎙 Microphone</option>
       <option value="system">🔊 System Audio (captures call)</option>
     </select>
   </div>
 
-  <div class="provider-row">
-    <label for="providerSelect" style="font-size:12px;color:#666;">AI Provider:</label>
+  <div class="row">
+    <label>AI:</label>
     <select id="providerSelect">
       <option value="groq">Groq (Free)</option>
       <option value="anthropic">Anthropic Claude</option>
       <option value="openai">OpenAI</option>
     </select>
-    <span id="providerStatus" style="font-size:11px;color:#22c55e;">✓ key set</span>
+    <span class="key-status" id="providerStatus">...</span>
   </div>
 
-  <div class="context-box">
-    <textarea id="contextInput" placeholder="💼 Paste prospect info, product details, or deal context here (optional)..." rows="3"></textarea>
-  </div>
+  <textarea id="contextInput" placeholder="💼 Paste prospect info or deal context here (optional)..."></textarea>
 
-  <div class="setup-warning" id="setupWarning">
-    ⚠️ Missing API keys. Create a <code>.env</code> file with:<br>
-    <code>ANTHROPIC_API_KEY=...</code><br>
-    <code>DEEPGRAM_API_KEY=...</code><br>
-    See <code>.env.example</code> for the template.
-  </div>
+  <div class="warning" id="setupWarning">⚠️ Missing API keys — check your .env file</div>
 
   <div class="status-row">
     <div class="dot" id="dot"></div>
-    <span class="status-text" id="statusText">Ready to start</span>
+    <span class="status-text" id="statusText">Ready</span>
   </div>
 
   <div class="buttons">
-    <button id="startBtn">▶ Start Listening</button>
+    <button id="startBtn">▶ Start</button>
     <button id="stopBtn" disabled>■ Stop</button>
     <button id="clearBtn">Clear</button>
   </div>
 
-  <div class="tip-preview" id="tipPreview">
-    <span style="color:#444">Tips will appear here...</span>
-  </div>
+  <div class="tips" id="tipPreview"><span style="color:#333">Tips will appear here...</span></div>
 
-  <div class="shortcut">Ctrl+Shift+H — toggle overlay visibility</div>
+  <div class="shortcut">Cmd+Shift+H — toggle overlay</div>
 
   <script>
-/* Control window: handles audio capture, Deepgram streaming, and UI state */
+    let deepgramSocket = null;
+    let micStream = null;
+    let processor = null;
+    let isCapturing = false;
+    let fullTranscript = '';
+    let deepgramKey = '';
+    let providers = [];
 
-let deepgramSocket = null;
-let micStream = null;
-let processor = null;
-let isCapturing = false;
-let fullTranscript = '';
-let deepgramKey = '';
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn  = document.getElementById('stopBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const dot = document.getElementById('dot');
+    const statusText = document.getElementById('statusText');
+    const tipPreview = document.getElementById('tipPreview');
+    const setupWarning = document.getElementById('setupWarning');
+    const providerSelect = document.getElementById('providerSelect');
+    const providerStatus = document.getElementById('providerStatus');
+    const contextInput = document.getElementById('contextInput');
 
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const clearBtn = document.getElementById('clearBtn');
-const dot = document.getElementById('dot');
-const statusText = document.getElementById('statusText');
-const tipPreview = document.getElementById('tipPreview');
-const setupWarning = document.getElementById('setupWarning');
-const providerSelect = document.getElementById('providerSelect');
-const providerStatus = document.getElementById('providerStatus');
-
-let providers = [];
-
-window.electronAPI.getEnv().then((env) => {
-  deepgramKey = env.deepgramKey;
-  providers = env.providers || [];
-  updateProviderStatus();
-  const hasDeepgram = env.hasDeepgramKey;
-  const activeProvider = providers.find((p) => p.key === providerSelect.value);
-  if (!hasDeepgram || !activeProvider?.hasKey) {
-    setupWarning.style.display = 'block';
-    startBtn.disabled = true;
-  }
-});
-
-providerSelect.addEventListener('change', () => {
-  window.electronAPI.setProvider(providerSelect.value);
-  updateProviderStatus();
-  const activeProvider = providers.find((p) => p.key === providerSelect.value);
-  if (activeProvider?.hasKey) {
-    setupWarning.style.display = 'none';
-    startBtn.disabled = false;
-  } else {
-    setupWarning.style.display = 'block';
-    startBtn.disabled = true;
-  }
-});
-
-const contextInput = document.getElementById('contextInput');
-const placeholders = {
-  sales: '💼 Paste prospect info, product details, or deal context here (optional)...',
-  interview: '🎯 Paste the job description or role details here (optional)...',
-};
-
-contextInput.addEventListener('input', () => {
-  window.electronAPI.setContext(contextInput.value);
-});
-
-function setMode(mode) {
-  window.electronAPI.setMode(mode);
-  window.electronAPI.clearTips();
-  tipPreview.innerHTML = '<span style="color:#444">Tips will appear here...</span>';
-  document.getElementById('modeSales').classList.toggle('active', mode === 'sales');
-  document.getElementById('modeInterview').classList.toggle('active', mode === 'interview');
-  contextInput.placeholder = placeholders[mode];
-  contextInput.value = '';
-  window.electronAPI.setContext('');
-}
-
-function updateProviderStatus() {
-  const active = providers.find((p) => p.key === providerSelect.value);
-  if (active?.hasKey) {
-    providerStatus.textContent = '✓ key set';
-    providerStatus.style.color = '#22c55e';
-  } else {
-    providerStatus.textContent = '✗ no key';
-    providerStatus.style.color = '#f87171';
-  }
-}
-
-window.electronAPI.onCoachingTip((tip) => {
-  if (!tip || tip.type === 'none' || !tip.text) return;
-  appendTip(tip);
-});
-
-window.electronAPI.onCaptureStatus((status) => {
-  updateStatus(status);
-});
-
-startBtn.addEventListener('click', startCapture);
-stopBtn.addEventListener('click', stopCapture);
-clearBtn.addEventListener('click', () => {
-  tipPreview.innerHTML = '<span style="color:#444">Tips will appear here...</span>';
-  fullTranscript = '';
-  window.electronAPI.clearTips();
-});
-
-async function startCapture() {
-  try {
-    updateStatus('connecting');
-    const sourceMode = document.getElementById('sourceSelect').value;
-
-    if (sourceMode === 'system') {
-      const sources = await window.electronAPI.getDesktopSources();
-      if (!sources || sources.length === 0) throw new Error('No screen sources found');
-      micStream = await navigator.mediaDevices.getUserMedia({
-        audio: { chromeMediaSource: 'desktop', chromeMediaSourceId: sources[0].id },
-        video: { chromeMediaSource: 'desktop', chromeMediaSourceId: sources[0].id },
-      });
-      micStream.getVideoTracks().forEach(t => t.stop());
-    } else {
-      micStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000, channelCount: 1 },
-      });
-    }
-    // Use MediaRecorder with webm/opus
-    processor = new MediaRecorder(micStream, { mimeType: 'audio/webm;codecs=opus' });
-
-    deepgramSocket = new WebSocket(
-      `wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&interim_results=true&smart_format=true&endpointing=300`,
-      ['token', deepgramKey]
-    );
-
-    deepgramSocket.onopen = () => {
-      isCapturing = true;
-      updateStatus('active');
-      processor.start(250);
+    const placeholders = {
+      sales: '💼 Paste prospect info or deal context here (optional)...',
+      interview: '🎯 Paste the job description here (optional)...',
     };
 
-    deepgramSocket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const transcript = data?.channel?.alternatives?.[0]?.transcript || '';
-        if (transcript && data?.is_final) {
-          fullTranscript += ' ' + transcript;
-          window.electronAPI.sendTranscriptChunk(transcript);
-          window.electronAPI.sendTranscriptUpdate(fullTranscript.trim());
-        }
-      } catch (_) {}
-    };
-
-    deepgramSocket.onerror = (e) => {
-      console.error('Deepgram error:', e);
-      statusText.textContent = 'Deepgram connection error';
-    };
-
-    deepgramSocket.onclose = (e) => {
-      console.warn('Deepgram closed:', e.code, e.reason);
-      if (isCapturing) stopCapture();
-    };
-
-    processor.ondataavailable = (e) => {
-      if (e.data.size > 0 && deepgramSocket?.readyState === WebSocket.OPEN) {
-        deepgramSocket.send(e.data);
+    // Load env / keys
+    window.electronAPI.getEnv().then((env) => {
+      deepgramKey = env.deepgramKey;
+      providers = env.providers || [];
+      refreshProviderStatus();
+      if (!env.hasDeepgramKey) {
+        setupWarning.style.display = 'block';
+        startBtn.disabled = true;
       }
-    };
-  } catch (err) {
-    statusText.textContent = `Error: ${err.message}`;
-    updateStatus('error');
-  }
-}
+    });
 
-function stopCapture() {
-  if (!isCapturing && !deepgramSocket && !micStream) return;
-  isCapturing = false;
-  const ws = deepgramSocket; deepgramSocket = null;
-  const rec = processor; processor = null;
-  const stream = micStream; micStream = null;
-  if (ws) { try { ws.close(); } catch(_){} }
-  if (rec && rec.state !== 'inactive') { try { rec.stop(); } catch(_){} }
-  if (stream) { stream.getTracks().forEach((t) => { try { t.stop(); } catch(_){} }); }
-  updateStatus('off');
-}
+    providerSelect.addEventListener('change', () => {
+      window.electronAPI.setProvider(providerSelect.value);
+      refreshProviderStatus();
+    });
 
-function updateStatus(status) {
-  window.electronAPI.sendCaptureStatus(status);
-  dot.className = 'dot';
-  if (status === 'active') {
-    dot.classList.add('active');
-    statusText.textContent = 'Listening to audio...';
-    startBtn.disabled = true; stopBtn.disabled = false;
-  } else if (status === 'connecting') {
-    statusText.textContent = 'Connecting...';
-    startBtn.disabled = true; stopBtn.disabled = false;
-  } else if (status === 'error') {
-    statusText.textContent = 'Error — check console';
-    startBtn.disabled = false; stopBtn.disabled = true;
-  } else {
-    statusText.textContent = 'Stopped';
-    startBtn.disabled = false; stopBtn.disabled = true;
-  }
-}
+    contextInput.addEventListener('input', () => {
+      window.electronAPI.setContext(contextInput.value);
+    });
 
-function appendTip(tip) {
-  const placeholder = tipPreview.querySelector('span');
-  if (placeholder) placeholder.remove();
-  const entry = document.createElement('div');
-  entry.className = 'tip-entry';
-  entry.innerHTML = `<span class="tip-badge badge-${tip.type}">${tip.type}</span>${escapeHtml(tip.text)}`;
-  tipPreview.appendChild(entry);
-  tipPreview.scrollTop = tipPreview.scrollHeight;
-}
+    function refreshProviderStatus() {
+      const p = providers.find(p => p.key === providerSelect.value);
+      if (p && p.hasKey) {
+        providerStatus.textContent = '✓';
+        providerStatus.className = 'key-status key-ok';
+      } else {
+        providerStatus.textContent = '✗ no key';
+        providerStatus.className = 'key-status key-no';
+      }
+    }
 
+    function setMode(mode) {
+      window.electronAPI.setMode(mode);
+      window.electronAPI.clearTips();
+      tipPreview.innerHTML = '<span style="color:#333">Tips will appear here...</span>';
+      document.getElementById('modeSales').classList.toggle('active', mode === 'sales');
+      document.getElementById('modeInterview').classList.toggle('active', mode === 'interview');
+      contextInput.placeholder = placeholders[mode];
+      contextInput.value = '';
+      window.electronAPI.setContext('');
+    }
 
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+    window.electronAPI.onCoachingTip((tip) => {
+      if (!tip || tip.type === 'none' || !tip.text) return;
+      const placeholder = tipPreview.querySelector('span');
+      if (placeholder) placeholder.remove();
+      const entry = document.createElement('div');
+      entry.className = 'tip-entry';
+      entry.innerHTML = '<span class="badge badge-' + tip.type + '">' + tip.type + '</span>' + esc(tip.text);
+      tipPreview.appendChild(entry);
+      tipPreview.scrollTop = tipPreview.scrollHeight;
+    });
+
+    window.electronAPI.onCaptureStatus((s) => setStatus(s));
+    window.electronAPI.onClearTips(() => {
+      tipPreview.innerHTML = '<span style="color:#333">Tips will appear here...</span>';
+    });
+
+    startBtn.addEventListener('click', startCapture);
+    stopBtn.addEventListener('click', stopCapture);
+    clearBtn.addEventListener('click', () => {
+      tipPreview.innerHTML = '<span style="color:#333">Tips will appear here...</span>';
+      fullTranscript = '';
+      window.electronAPI.clearTips();
+    });
+
+    async function startCapture() {
+      try {
+        setStatus('connecting');
+        const mode = document.getElementById('sourceSelect').value;
+
+        if (mode === 'system') {
+          const sources = await window.electronAPI.getDesktopSources();
+          if (!sources || !sources.length) throw new Error('No screen sources found');
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: { chromeMediaSource: 'desktop', chromeMediaSourceId: sources[0].id },
+            video: { chromeMediaSource: 'desktop', chromeMediaSourceId: sources[0].id },
+          });
+          micStream.getVideoTracks().forEach(t => t.stop());
+        } else {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false },
+          });
+        }
+
+        processor = new MediaRecorder(micStream, { mimeType: 'audio/webm;codecs=opus' });
+
+        deepgramSocket = new WebSocket(
+          'wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&interim_results=true&smart_format=true&endpointing=300',
+          ['token', deepgramKey]
+        );
+
+        deepgramSocket.onopen = () => {
+          isCapturing = true;
+          setStatus('active');
+          processor.start(250);
+        };
+
+        deepgramSocket.onmessage = (e) => {
+          try {
+            const d = JSON.parse(e.data);
+            const t = d?.channel?.alternatives?.[0]?.transcript || '';
+            if (t && d?.is_final) {
+              fullTranscript += ' ' + t;
+              window.electronAPI.sendTranscriptChunk(t);
+              window.electronAPI.sendTranscriptUpdate(fullTranscript.trim());
+            }
+          } catch(_) {}
+        };
+
+        deepgramSocket.onerror = () => { statusText.textContent = 'Connection error'; };
+        deepgramSocket.onclose = () => { if (isCapturing) stopCapture(); };
+
+        processor.ondataavailable = (e) => {
+          if (e.data.size > 0 && deepgramSocket && deepgramSocket.readyState === WebSocket.OPEN) {
+            deepgramSocket.send(e.data);
+          }
+        };
+
+      } catch (err) {
+        statusText.textContent = 'Error: ' + err.message;
+        setStatus('error');
+      }
+    }
+
+    function stopCapture() {
+      isCapturing = false;
+      const ws = deepgramSocket; deepgramSocket = null;
+      const rec = processor; processor = null;
+      const stream = micStream; micStream = null;
+      try { if (ws) ws.close(); } catch(_) {}
+      try { if (rec && rec.state !== 'inactive') rec.stop(); } catch(_) {}
+      try { if (stream) stream.getTracks().forEach(t => t.stop()); } catch(_) {}
+      setStatus('off');
+    }
+
+    function setStatus(s) {
+      window.electronAPI.sendCaptureStatus(s);
+      dot.className = 'dot';
+      if (s === 'active') {
+        dot.classList.add('active');
+        statusText.textContent = 'Listening...';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      } else if (s === 'connecting') {
+        statusText.textContent = 'Connecting...';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      } else if (s === 'error') {
+        dot.classList.add('error');
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      } else {
+        statusText.textContent = 'Ready';
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    }
+
+    // Overlay drag
+    const handle = document.getElementById('modeSales'); // reuse top area
+    let dragging = false, startX, startY, winX, winY;
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging || winX === undefined) return;
+      window.electronAPI.moveOverlay(winX + (e.screenX - startX), winY + (e.screenY - startY));
+    });
+    window.addEventListener('mouseup', () => { dragging = false; winX = undefined; });
+
+    function esc(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
   </script>
 </body>
 </html>

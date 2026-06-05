@@ -29,7 +29,7 @@ function createOverlayWindow() {
   });
 
   overlayWindow.loadFile(path.join(__dirname, 'renderer', 'overlay.html'));
-  overlayWindow.setIgnoreMouseEvents(false);
+  overlayWindow.setIgnoreMouseEvents(true, { forward: true });
 
   // Make invisible to screen sharing (Mac: setContentProtection, Windows: handled via CSS trick)
   overlayWindow.setContentProtection(true);

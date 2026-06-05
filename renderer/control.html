@@ -145,6 +145,10 @@
   <div class="shortcut">Cmd+Shift+H — toggle overlay</div>
 
   <script>
+    window.onerror = (msg, src, line) => {
+      document.body.style.background = '#1a0000';
+      document.body.innerHTML = '<div style="color:#f87171;padding:20px;font-family:monospace;font-size:13px;white-space:pre-wrap">ERROR line '+line+':\n'+msg+'</div>';
+    };
     let deepgramSocket = null;
     let micStream = null;
     let processor = null;

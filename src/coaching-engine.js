@@ -52,6 +52,12 @@ const PROVIDERS = {
     model: 'llama-3.3-70b-versatile',
     envKey: 'GROQ_API_KEY',
   },
+  ollama: {
+    label: 'Ollama (Local, No Limits)',
+    baseURL: 'http://localhost:11434/v1',
+    model: 'llama3.1',
+    envKey: null,
+  },
   anthropic: {
     label: 'Anthropic Claude',
     baseURL: null, // uses SDK
@@ -95,8 +101,8 @@ class CoachingEngine {
 
   async generateReport(fullTranscript, tips) {
     const pConfig = PROVIDERS[this.provider];
-    const apiKey = process.env[pConfig.envKey];
-    if (!apiKey) throw new Error(`Missing ${pConfig.envKey}`);
+    const apiKey = pConfig.envKey ? process.env[pConfig.envKey] : 'ollama';
+    if (pConfig.envKey && !apiKey) throw new Error(`Missing ${pConfig.envKey}`);
 
     const modeLabel = this.mode === 'interview' ? 'job interview' : 'sales call';
     const tipsSummary = tips.map(t => `[${t.type}] ${t.text}`).join('\n');
@@ -152,7 +158,7 @@ Now generate a comprehensive post-session report. Respond with valid JSON only:
     return Object.entries(PROVIDERS).map(([key, p]) => ({
       key,
       label: p.label,
-      hasKey: !!process.env[p.envKey],
+      hasKey: p.envKey === null ? true : !!process.env[p.envKey],
     }));
   }
 
@@ -194,9 +200,9 @@ Now generate a comprehensive post-session report. Respond with valid JSON only:
 
   async _callProvider(transcript) {
     const pConfig = PROVIDERS[this.provider];
-    const apiKey = process.env[pConfig.envKey];
+    const apiKey = pConfig.envKey ? process.env[pConfig.envKey] : 'ollama';
 
-    if (!apiKey) {
+    if (pConfig.envKey && !apiKey) {
       return { type: 'error', text: `Set ${pConfig.envKey} in your .env file` };
     }
 

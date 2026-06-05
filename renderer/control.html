@@ -410,11 +410,14 @@ async function startCapture() {
 }
 
 function stopCapture() {
+  if (!isCapturing && !deepgramSocket && !micStream) return;
   isCapturing = false;
-  if (deepgramSocket) { try { deepgramSocket.close(); } catch(_){} deepgramSocket = null; }
-  if (processor && processor.state !== 'inactive') { try { processor.stop(); } catch(_){} }
-  processor = null;
-  if (micStream) { micStream.getTracks().forEach((t) => { try { t.stop(); } catch(_){} }); micStream = null; }
+  const ws = deepgramSocket; deepgramSocket = null;
+  const rec = processor; processor = null;
+  const stream = micStream; micStream = null;
+  if (ws) { try { ws.close(); } catch(_){} }
+  if (rec && rec.state !== 'inactive') { try { rec.stop(); } catch(_){} }
+  if (stream) { stream.getTracks().forEach((t) => { try { t.stop(); } catch(_){} }); }
   updateStatus('off');
 }
 

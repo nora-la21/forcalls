@@ -165,7 +165,7 @@ Now generate a comprehensive post-session report. Respond with valid JSON only:
     return new Promise((resolve) => {
       this.pendingResolvers.push(resolve);
       clearTimeout(this.debounceTimer);
-      this.debounceTimer = setTimeout(() => this._runAnalysis(), 3000);
+      this.debounceTimer = setTimeout(() => this._runAnalysis(), 1500);
     });
   }
 

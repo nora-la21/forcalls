@@ -55,7 +55,7 @@ const PROVIDERS = {
   ollama: {
     label: 'Ollama (Local, No Limits)',
     baseURL: 'http://localhost:11434/v1',
-    model: 'llama3.1',
+    model: 'llama3.2',
     envKey: null,
   },
   anthropic: {
@@ -173,7 +173,7 @@ Now generate a comprehensive post-session report. Respond with valid JSON only:
     return new Promise((resolve) => {
       this.pendingResolvers.push(resolve);
       clearTimeout(this.debounceTimer);
-      this.debounceTimer = setTimeout(() => this._runAnalysis(), 5000);
+      this.debounceTimer = setTimeout(() => this._runAnalysis(), 3000);
     });
   }
 

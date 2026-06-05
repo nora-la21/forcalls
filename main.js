@@ -143,3 +143,7 @@ ipcMain.on('set-mode', (event, mode) => {
 ipcMain.on('set-context', (event, text) => {
   coachingEngine.setContext(text);
 });
+
+ipcMain.handle('generate-report', async (event, { transcript, tips }) => {
+  return coachingEngine.generateReport(transcript, tips);
+});

@@ -49,7 +49,7 @@ const PROVIDERS = {
   groq: {
     label: 'Groq (Free)',
     baseURL: 'https://api.groq.com/openai/v1',
-    model: 'llama-3.1-8b-instant',
+    model: 'llama-3.3-70b-versatile',
     envKey: 'GROQ_API_KEY',
   },
   anthropic: {
@@ -93,6 +93,56 @@ class CoachingEngine {
     this.context = text.trim();
   }
 
+  async generateReport(fullTranscript, tips) {
+    const pConfig = PROVIDERS[this.provider];
+    const apiKey = process.env[pConfig.envKey];
+    if (!apiKey) throw new Error(`Missing ${pConfig.envKey}`);
+
+    const modeLabel = this.mode === 'interview' ? 'job interview' : 'sales call';
+    const tipsSummary = tips.map(t => `[${t.type}] ${t.text}`).join('\n');
+    const contextBlock = this.context ? `\nSession context:\n${this.context}\n` : '';
+
+    const prompt = `You analyzed a ${modeLabel} in real time and provided these coaching tips:\n${tipsSummary}\n${contextBlock}
+Full transcript:\n"${fullTranscript.slice(0, 4000)}"\n
+Now generate a comprehensive post-session report. Respond with valid JSON only:
+{
+  "score": <number 1-10>,
+  "score_rationale": "<1 sentence why>",
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "improvements": [{"area": "<area>", "detail": "<specific advice>"}],
+  "mistakes": [{"mistake": "<what happened>", "fix": "<how to fix>"}],
+  "repeatable_patterns": ["<pattern observed more than once>"],
+  "top_recommendation": "<single most important thing to work on>",
+  "summary": "<2-3 sentence overall summary>"
+}`;
+
+    const messages = [
+      { role: 'system', content: `You are an expert ${modeLabel} coach writing a post-session performance report. Be specific, honest, and actionable.` },
+      { role: 'user', content: prompt },
+    ];
+
+    let raw;
+    if (this.provider === 'anthropic') {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: pConfig.model, max_tokens: 1000, system: messages[0].content, messages: [messages[1]] }),
+      });
+      const data = await response.json();
+      raw = data.content?.[0]?.text;
+    } else {
+      const response = await fetch(`${pConfig.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: pConfig.model, max_tokens: 1000, messages }),
+      });
+      const data = await response.json();
+      raw = data.choices?.[0]?.message?.content;
+    }
+
+    return JSON.parse(raw.replace(/```json|```/g, '').trim());
+  }
+
   _getSystemPrompt() {
     if (this.mode === 'interview') return buildInterviewPrompt(this.context);
     return buildSalesPrompt(this.context);
@@ -117,7 +167,7 @@ class CoachingEngine {
     return new Promise((resolve) => {
       this.pendingResolvers.push(resolve);
       clearTimeout(this.debounceTimer);
-      this.debounceTimer = setTimeout(() => this._runAnalysis(), 3000);
+      this.debounceTimer = setTimeout(() => this._runAnalysis(), 5000);
     });
   }
 

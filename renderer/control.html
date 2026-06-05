@@ -146,6 +146,10 @@
 
   <div class="tips" id="tipPreview"><span style="color:#333">Tips will appear here...</span></div>
 
+  <button id="reportBtn" style="display:none;background:#6366f1;color:#fff;padding:9px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;width:100%;">
+    📄 Generate Session Report
+  </button>
+
   <div class="shortcut">Cmd+Shift+H — toggle overlay</div>
 
   <script>
@@ -159,8 +163,11 @@
     let isCapturing = false;
     let fullTranscript = '';
     let deepgramKey = '';
+    let sessionTips = [];
+    let sessionMode = 'sales';
     let providers = [];
 
+    const reportBtn = document.getElementById('reportBtn');
     const startBtn = document.getElementById('startBtn');
     const stopBtn  = document.getElementById('stopBtn');
     const clearBtn = document.getElementById('clearBtn');
@@ -209,6 +216,7 @@
     }
 
     function setMode(mode) {
+      sessionMode = mode;
       window.electronAPI.setMode(mode);
       window.electronAPI.clearTips();
       tipPreview.innerHTML = '<span style="color:#333">Tips will appear here...</span>';
@@ -217,10 +225,13 @@
       contextInput.placeholder = placeholders[mode];
       contextInput.value = '';
       window.electronAPI.setContext('');
+      sessionTips = [];
+      reportBtn.style.display = 'none';
     }
 
     window.electronAPI.onCoachingTip((tip) => {
       if (!tip || tip.type === 'none' || !tip.text) return;
+      sessionTips.push(tip);
       const placeholder = tipPreview.querySelector('span');
       if (placeholder) placeholder.remove();
       const entry = document.createElement('div');
@@ -333,6 +344,7 @@
         statusText.textContent = 'Ready';
         startBtn.disabled = false;
         stopBtn.disabled = true;
+        if (sessionTips.length > 0) reportBtn.style.display = 'block';
       }
     }
 
@@ -344,6 +356,102 @@
       window.electronAPI.moveOverlay(winX + (e.screenX - startX), winY + (e.screenY - startY));
     });
     window.addEventListener('mouseup', () => { dragging = false; winX = undefined; });
+
+    reportBtn.addEventListener('click', async () => {
+      reportBtn.textContent = '⏳ Generating report...';
+      reportBtn.disabled = true;
+      try {
+        const report = await window.electronAPI.generateReport({ transcript: fullTranscript, tips: sessionTips });
+        downloadReport(report);
+        reportBtn.textContent = '✅ Report downloaded!';
+      } catch (err) {
+        reportBtn.textContent = '❌ Error: ' + err.message;
+      }
+      setTimeout(() => {
+        reportBtn.textContent = '📄 Generate Session Report';
+        reportBtn.disabled = false;
+      }, 3000);
+    });
+
+    function downloadReport(r) {
+      const date = new Date().toLocaleDateString();
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const scoreColor = r.score >= 8 ? '#22c55e' : r.score >= 6 ? '#f59e0b' : '#f87171';
+      const mode = sessionMode === 'interview' ? 'Interview' : 'Sales Call';
+
+      const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>ForCalls Report — ${date}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #1f2937; }
+  h1 { font-size: 28px; margin-bottom: 4px; }
+  .meta { color: #6b7280; font-size: 14px; margin-bottom: 32px; }
+  .score-box { background: #f9fafb; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 32px; border: 2px solid ${scoreColor}; }
+  .score-num { font-size: 64px; font-weight: 800; color: ${scoreColor}; line-height: 1; }
+  .score-label { font-size: 14px; color: #6b7280; margin-top: 4px; }
+  .score-rationale { font-size: 15px; margin-top: 12px; color: #374151; }
+  .summary { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 0 8px 8px 0; margin-bottom: 32px; font-size: 15px; line-height: 1.6; }
+  h2 { font-size: 18px; font-weight: 700; margin: 28px 0 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 8px; font-size: 14px; line-height: 1.5; }
+  .strength { color: #065f46; }
+  .mistake { margin-bottom: 16px; background: #fef2f2; border-radius: 8px; padding: 12px 16px; }
+  .mistake-title { font-weight: 600; color: #991b1b; font-size: 14px; }
+  .mistake-fix { color: #374151; font-size: 13px; margin-top: 4px; }
+  .improvement { margin-bottom: 16px; background: #fefce8; border-radius: 8px; padding: 12px 16px; }
+  .improvement-area { font-weight: 600; color: #92400e; font-size: 14px; }
+  .improvement-detail { color: #374151; font-size: 13px; margin-top: 4px; }
+  .pattern { background: #f3f4f6; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; font-size: 14px; }
+  .top-rec { background: #1e1b4b; color: #fff; border-radius: 12px; padding: 20px 24px; margin-top: 32px; }
+  .top-rec h2 { color: #a5b4fc; border-bottom-color: #4338ca; margin-top: 0; }
+  .top-rec p { font-size: 15px; line-height: 1.6; margin: 0; }
+  .tips-list { margin-top: 32px; }
+  .tip-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+  .tip-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #e5e7eb; color: #374151; white-space: nowrap; align-self: flex-start; margin-top: 1px; }
+  footer { margin-top: 48px; text-align: center; font-size: 12px; color: #9ca3af; }
+</style>
+</head><body>
+<h1>ForCalls Session Report</h1>
+<p class="meta">${mode} · ${date} at ${time}</p>
+
+<div class="score-box">
+  <div class="score-num">${r.score}<span style="font-size:32px;color:#9ca3af">/10</span></div>
+  <div class="score-label">Overall Score</div>
+  <div class="score-rationale">${esc(r.score_rationale)}</div>
+</div>
+
+<div class="summary">${esc(r.summary)}</div>
+
+<h2>✅ Strengths</h2>
+<ul>${r.strengths.map(s => `<li class="strength">${esc(s)}</li>`).join('')}</ul>
+
+<h2>📈 Areas for Improvement</h2>
+${r.improvements.map(i => `<div class="improvement"><div class="improvement-area">${esc(i.area)}</div><div class="improvement-detail">${esc(i.detail)}</div></div>`).join('')}
+
+<h2>⚠️ Mistakes Made</h2>
+${r.mistakes.map(m => `<div class="mistake"><div class="mistake-title">${esc(m.mistake)}</div><div class="mistake-fix">Fix: ${esc(m.fix)}</div></div>`).join('')}
+
+<h2>🔁 Repeatable Patterns</h2>
+${r.repeatable_patterns.map(p => `<div class="pattern">${esc(p)}</div>`).join('')}
+
+<div class="top-rec"><h2>🎯 Top Recommendation</h2><p>${esc(r.top_recommendation)}</p></div>
+
+<div class="tips-list">
+<h2>💬 Live Tips from This Session</h2>
+${sessionTips.map(t => `<div class="tip-row"><span class="tip-badge">${t.type}</span><span>${esc(t.text)}</span></div>`).join('')}
+</div>
+
+<footer>Generated by ForCalls · ${date}</footer>
+</body></html>`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `forcalls-report-${date.replace(/\//g,'-')}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
     function esc(s) {
       return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

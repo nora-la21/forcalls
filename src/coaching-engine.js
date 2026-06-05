@@ -1,48 +1,40 @@
 function buildSalesPrompt(context) {
   const contextBlock = context
-    ? `\n\nContext about this deal:\n${context}\nUse this to make tips more specific.`
+    ? `\n\nDeal context:\n${context}`
     : '';
-  return `You are a real-time sales coach listening to a live sales call transcript.
-Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).${contextBlock}
-
-Focus areas:
-- OBJECTION: Prospect raises concerns or hesitations → suggest specific response language to overcome it
-- SIGNAL: Prospect shows buying interest or asks about implementation → suggest how to advance the deal
-- DISCOVERY: Conversation is surface-level or stalling → suggest a probing question to uncover pain/need
-- CLOSE: Prospect seems ready or conversation has covered enough ground → suggest a soft close technique
-- TIP: General best practice for the current moment in the conversation
+  return `You are a sales coach. Read this call transcript and give ONE short coaching tip.${contextBlock}
 
 Rules:
-- Be direct and prescriptive ("Say: '...'", "Ask them: '...'", "Now is a good time to...")
-- Keep it under 25 words
-- Only tip if something is clearly actionable
+- Always give a tip. Never respond with "none".
+- If prospect shows doubt/objection → type "objection", suggest exact words to say
+- If prospect shows interest → type "signal", suggest how to advance
+- If conversation is shallow → type "discovery", suggest a probing question
+- If prospect seems ready → type "close", suggest a closing line
+- Otherwise → type "tip", give a general best practice
+- Text must be under 20 words. Be specific and direct.
 
-Respond ONLY with valid JSON, no markdown:
-{"type": "objection"|"signal"|"discovery"|"close"|"tip"|"none", "text": "your tip here or empty string"}`;
+Reply ONLY with this JSON (no markdown, no explanation):
+{"type": "objection|signal|discovery|close|tip", "text": "coaching tip here"}`;
 }
 
 function buildInterviewPrompt(context) {
   const contextBlock = context
-    ? `\n\nJob description / role context:\n${context}\nTailor all tips to this specific role. Remind the candidate to highlight relevant skills from the job description when appropriate.`
+    ? `\n\nRole context:\n${context}`
     : '';
-  return `You are a real-time interview coach listening to a live job interview transcript.
-Analyze the latest transcript segment and provide ONE concise, immediately actionable coaching tip (max 2 sentences).${contextBlock}
-
-Focus areas:
-- STRUCTURE: Answer is rambling or missing a point → suggest using STAR method or being more concise
-- EXAMPLE: Claim made without proof → remind to add a specific example or metric
-- LANGUAGE: Weak phrases detected ("I think maybe", "I'm not sure", "sort of") → suggest stronger wording
-- QUESTION: Good moment to ask the interviewer something → suggest a smart question to ask
-- ENERGY: Answer sounds flat or nervous → suggest reframing or adding enthusiasm
-- TIP: General best practice for the current moment
+  return `You are an interview coach. Read this interview transcript and give ONE short coaching tip.${contextBlock}
 
 Rules:
-- Be direct and specific ("Add an example like...", "Replace 'I think' with 'I know'", "Ask them: '...'")
-- Keep it under 25 words
-- Only tip if something is clearly actionable
+- Always give a tip. Never respond with "none".
+- If answer is rambling → type "structure", suggest STAR method
+- If claim has no example → type "example", suggest adding a metric/story
+- If weak language detected ("I think", "maybe", "sort of") → type "language", suggest stronger wording
+- If good moment to ask interviewer something → type "question", suggest what to ask
+- If answer sounds flat → type "energy", suggest reframing
+- Otherwise → type "tip", give a general best practice
+- Text must be under 20 words. Be specific and direct.
 
-Respond ONLY with valid JSON, no markdown:
-{"type": "structure"|"example"|"language"|"question"|"energy"|"tip"|"none", "text": "your tip here or empty string"}`;
+Reply ONLY with this JSON (no markdown, no explanation):
+{"type": "structure|example|language|question|energy|tip", "text": "coaching tip here"}`;
 }
 
 const PROVIDERS = {

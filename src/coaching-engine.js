@@ -69,7 +69,7 @@ class CoachingEngine {
     this.recentTranscript = '';
     this.debounceTimer = null;
     this.pendingResolvers = [];
-    this.provider = 'groq';
+    this.provider = 'ollama';
     this.mode = 'sales';
     this.context = '';
   }
@@ -132,12 +132,13 @@ Now generate a comprehensive post-session report. Respond with valid JSON only:
       const response = await fetch(`${pConfig.baseURL}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: pConfig.model, max_tokens: 1000, messages }),
+        body: JSON.stringify({ model: pConfig.model, max_tokens: 2000, messages }),
       });
       const data = await response.json();
       raw = data.choices?.[0]?.message?.content;
     }
 
+    if (!raw) throw new Error('Empty response from provider');
     return JSON.parse(raw.replace(/```json|```/g, '').trim());
   }
 

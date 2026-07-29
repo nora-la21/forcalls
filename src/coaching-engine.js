@@ -45,7 +45,7 @@ const PROVIDERS = {
     envKey: 'GROQ_API_KEY',
   },
   ollama: {
-    label: 'Ollama (Local, No Limits)',
+    label: 'Ollama · mistral:7b (Local)',
     baseURL: 'http://localhost:11434/v1',
     model: 'mistral:7b',
     envKey: null,

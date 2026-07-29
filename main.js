@@ -149,6 +149,10 @@ ipcMain.on('set-context', (event, text) => {
   coachingEngine.setContext(text);
 });
 
+ipcMain.on('set-tactics', (event, text) => {
+  coachingEngine.setTactics(text);
+});
+
 ipcMain.handle('generate-report', async (event, { transcript, tips }) => {
   return coachingEngine.generateReport(transcript, tips);
 });

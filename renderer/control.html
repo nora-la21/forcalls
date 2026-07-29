@@ -131,6 +131,7 @@
   </div>
 
   <textarea id="contextInput" placeholder="💼 Paste prospect info or deal context here (optional)..."></textarea>
+  <textarea id="tacticsInput" rows="3" placeholder="🧠 Your tactics (optional): e.g. 'Use SPIN selling. Always push for a demo booking. Never discount before asking about budget.'"></textarea>
 
   <div class="warning" id="setupWarning">⚠️ Missing API keys — check your .env file</div>
 
@@ -179,6 +180,7 @@
     const providerSelect = document.getElementById('providerSelect');
     const providerStatus = document.getElementById('providerStatus');
     const contextInput = document.getElementById('contextInput');
+    const tacticsInput = document.getElementById('tacticsInput');
 
     const placeholders = {
       sales: '💼 Paste prospect info or deal context here (optional)...',
@@ -205,6 +207,10 @@
       window.electronAPI.setContext(contextInput.value);
     });
 
+    tacticsInput.addEventListener('input', () => {
+      window.electronAPI.setTactics(tacticsInput.value);
+    });
+
     function refreshProviderStatus() {
       const p = providers.find(p => p.key === providerSelect.value);
       if (p && p.hasKey) {
@@ -226,6 +232,8 @@
       contextInput.placeholder = placeholders[mode];
       contextInput.value = '';
       window.electronAPI.setContext('');
+      tacticsInput.value = '';
+      window.electronAPI.setTactics('');
       sessionTips = [];
       reportBtn.style.display = 'none';
     }

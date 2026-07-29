@@ -1,8 +1,7 @@
-function buildSalesPrompt(context) {
-  const contextBlock = context
-    ? `\n\nDeal context:\n${context}`
-    : '';
-  return `You are a sales coach. Read this call transcript and give ONE short coaching tip.${contextBlock}
+function buildSalesPrompt(context, tactics) {
+  const contextBlock = context ? `\n\nDeal context:\n${context}` : '';
+  const tacticsBlock = tactics ? `\n\nMy sales tactics to follow:\n${tactics}` : '';
+  return `You are a sales coach. Read this call transcript and give ONE short coaching tip.${contextBlock}${tacticsBlock}
 
 Rules:
 - Always give a tip. Never respond with "none".
@@ -17,11 +16,10 @@ Reply ONLY with this JSON (no markdown, no explanation):
 {"type": "objection|signal|discovery|close|tip", "text": "coaching tip here"}`;
 }
 
-function buildInterviewPrompt(context) {
-  const contextBlock = context
-    ? `\n\nRole context:\n${context}`
-    : '';
-  return `You are an interview coach. Read this interview transcript and give ONE short coaching tip.${contextBlock}
+function buildInterviewPrompt(context, tactics) {
+  const contextBlock = context ? `\n\nRole context:\n${context}` : '';
+  const tacticsBlock = tactics ? `\n\nMy interview tactics to follow:\n${tactics}` : '';
+  return `You are an interview coach. Read this interview transcript and give ONE short coaching tip.${contextBlock}${tacticsBlock}
 
 Rules:
 - Always give a tip. Never respond with "none".
@@ -72,6 +70,7 @@ class CoachingEngine {
     this.provider = 'ollama';
     this.mode = 'sales';
     this.context = '';
+    this.tactics = '';
   }
 
   setProvider(providerKey) {
@@ -89,6 +88,10 @@ class CoachingEngine {
 
   setContext(text) {
     this.context = text.trim();
+  }
+
+  setTactics(text) {
+    this.tactics = text.trim();
   }
 
   async generateReport(fullTranscript, tips) {
@@ -143,8 +146,8 @@ Now generate a comprehensive post-session report. Respond with valid JSON only:
   }
 
   _getSystemPrompt() {
-    if (this.mode === 'interview') return buildInterviewPrompt(this.context);
-    return buildSalesPrompt(this.context);
+    if (this.mode === 'interview') return buildInterviewPrompt(this.context, this.tactics);
+    return buildSalesPrompt(this.context, this.tactics);
   }
 
   getProviders() {

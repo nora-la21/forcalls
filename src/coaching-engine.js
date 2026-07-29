@@ -47,7 +47,7 @@ const PROVIDERS = {
   ollama: {
     label: 'Ollama (Local, No Limits)',
     baseURL: 'http://localhost:11434/v1',
-    model: 'llama3.2',
+    model: 'mistral:7b',
     envKey: null,
   },
   anthropic: {

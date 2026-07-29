@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setMode: (mode) => ipcRenderer.send('set-mode', mode),
   setContext: (text) => ipcRenderer.send('set-context', text),
   setTactics: (text) => ipcRenderer.send('set-tactics', text),
+  openBattlecard: () => ipcRenderer.invoke('open-battlecard'),
   generateReport: (data) => ipcRenderer.invoke('generate-report', data),
 
   // Overlay drag

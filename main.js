@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, desktopCapturer, dialog } = require('electron');
+const fs = require('fs');
 const path = require('path');
 const CoachingEngine = require('./src/coaching-engine');
 
@@ -151,6 +152,34 @@ ipcMain.on('set-context', (event, text) => {
 
 ipcMain.on('set-tactics', (event, text) => {
   coachingEngine.setTactics(text);
+});
+
+ipcMain.handle('open-battlecard', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(controlWindow, {
+    title: 'Open Battlecard',
+    filters: [{ name: 'Documents', extensions: ['pdf', 'docx', 'doc', 'txt'] }],
+    properties: ['openFile'],
+  });
+  if (canceled || !filePaths.length) return null;
+
+  const filePath = filePaths[0];
+  const ext = filePath.split('.').pop().toLowerCase();
+
+  if (ext === 'txt') {
+    return fs.readFileSync(filePath, 'utf8');
+  }
+  if (ext === 'pdf') {
+    const pdfParse = require('pdf-parse');
+    const buffer = fs.readFileSync(filePath);
+    const data = await pdfParse(buffer);
+    return data.text;
+  }
+  if (ext === 'docx' || ext === 'doc') {
+    const mammoth = require('mammoth');
+    const result = await mammoth.extractRawText({ path: filePath });
+    return result.value;
+  }
+  return null;
 });
 
 ipcMain.handle('generate-report', async (event, { transcript, tips }) => {
